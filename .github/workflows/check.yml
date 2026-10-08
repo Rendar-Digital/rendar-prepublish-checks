@@ -20,7 +20,7 @@ jobs:
       - name: PHP lint
         run: bash bin/php-lint
       - name: Updater stub contract
-        run: php tests/test-updater.php unconfigured && php tests/test-updater.php
+        run: php tests/test-updater.php
       - name: Unit and contract tests
         run: bash tests/run.sh
       - name: build-zip

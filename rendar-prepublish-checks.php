@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Rendar Prepublish Checks
  * Description: Article quality checks shown live while an author writes, and enforced when the post is published or scheduled. Authors can always save to pending; publishing is what the gate holds.
- * Version:     0.1.0-dev
+ * Version:     0.1.0
  * Author:      Rendar Digital
  * Text Domain: rendar-prepublish-checks
  * License: GPL-2.0-or-later
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'RENDAR_PC_VERSION', '0.1.0-dev' );
+define( 'RENDAR_PC_VERSION', '0.1.0' );
 define( 'RENDAR_PC_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RENDAR_PC_URL', plugin_dir_url( __FILE__ ) );
 require_once RENDAR_PC_DIR . 'inc/class-rendar-pc-updater.php';

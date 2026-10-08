@@ -15,6 +15,5 @@
   plugin-specific state in post meta, not in saved block markup.
 - Run `bash tests/run.sh` before committing; CI also runs `bin/build-zip` and
   `tests/build-zip.sh`.
-- Never put credentials in files, logs or test fixtures. Update tokens belong in
-  `wp-config.php` on each site.
+- Never put credentials in files, logs or test fixtures.
 - Do not tag, publish a release or deploy without explicit authorization.

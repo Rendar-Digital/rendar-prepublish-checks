@@ -32,7 +32,6 @@ jobs:
         run: |
           bash bin/php-lint
           bash tests/run.sh
-          php tests/test-updater.php unconfigured
           php tests/test-updater.php
           bash tests/build-zip.sh
       - name: Build and verify release assets

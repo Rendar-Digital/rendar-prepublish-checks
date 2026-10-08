@@ -5,7 +5,6 @@ cd "$root"
 
 echo '== php -l =='
 bash bin/php-lint
-php tests/test-updater.php unconfigured
 php tests/test-updater.php
 
 echo '== unit: boot / advisory-only / enforcement lock =='

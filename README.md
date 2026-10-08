@@ -67,16 +67,9 @@ belongs in a site extension (an mu-plugin, typically). A worked example lives in
 
 ## Automatic updates
 
-The static `Update URI: https://updates.rendar.digital/rendar-prepublish-checks` prevents WordPress.org from offering an unrelated plugin; it is an identifier, not the API base. Each site must define both values in `wp-config.php` (never plugin options):
+The static `Update URI: https://updates.rendar.digital/rendar-prepublish-checks` prevents WordPress.org from offering an unrelated plugin; it is an identifier, not the API base. The updater reads this repository's public GitHub Release metadata and requires no site configuration. Define `RENDAR_UPDATES_DISABLED` as `true` in `wp-config.php` only to opt out. WordPress manages normal plugin auto-update opt-in and cron. Network-activate this plugin on multisite to register its update hooks across the network.
 
-```php
-define( 'RENDAR_UPDATES_URL', 'https://your-update-proxy.example' );
-define( 'RENDAR_UPDATES_TOKEN', 'site-specific-token-from-secure-storage' );
-```
-
-Absent either constant, checks are quietly disabled. The bearer goes only to the configured HTTPS `/v1/` path and authenticated redirects are not followed. WordPress manages normal plugin auto-update opt-in and cron. Network-activate this plugin on multisite to register its update hooks across the network. `http_api_debug` listeners and HTTP loggers can see request arguments, including Authorization: redact that header before logging or displaying them.
-
-Release by changing the header Version and `RENDAR_PC_VERSION` together to a stable X.Y.Z, committing and testing, tagging `vX.Y.Z`, pushing the tag, and publishing a non-draft GitHub Release. `.github/workflows/release.yml` runs tests, validates the tag/version/constant, reuses `bin/build-zip`, then attaches `rendar-prepublish-checks.zip` (root `rendar-prepublish-checks/`) and header-derived `info.json`. A `-dev` version is deliberately **not releasable**: a release tag cannot match it.
+Release by changing the header Version and `RENDAR_PC_VERSION` together to a stable X.Y.Z, committing and testing, tagging `vX.Y.Z`, pushing the tag, and publishing a non-draft GitHub Release. `.github/workflows/release.yml` runs tests, validates the tag/version/constant, reuses `bin/build-zip`, then attaches `rendar-prepublish-checks.zip` (root `rendar-prepublish-checks/`) and `info.json`. The metadata includes the exact GitHub package URL, release tag, UTC generation time, and the matching `CHANGELOG.md` section. A `-dev` version is deliberately **not releasable**: a release tag cannot match it.
 
 ## Development
 

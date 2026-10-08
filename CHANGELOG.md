@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0-dev (unreleased)
+## 0.1.0
 
 Initial release. Advisory evaluation only — no publish gate.
 
@@ -23,4 +23,4 @@ Initial release. Advisory evaluation only — no publish gate.
   refusal below it.
 - Enforcement subsystems (publish gate, scheduled re-check, issue lifecycle,
   failure notifications, admin issue queue) present but locked off.
-- Private automatic updates via `RENDAR_UPDATES_URL` / `RENDAR_UPDATES_TOKEN`.
+- Automatic updates from public GitHub Releases; no site token or update service required.
