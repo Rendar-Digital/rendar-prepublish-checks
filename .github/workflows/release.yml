@@ -1,0 +1,56 @@
+name: Release assets
+on:
+  release:
+    types: [published]
+permissions:
+  contents: write
+jobs:
+  assets:
+    if: ${{ !github.event.release.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Cache pinned WordPress core download
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/rendar-wp-core-cache
+          key: wp-core-${{ hashFiles('bin/provision-wp-core') }}
+      - name: Provision pinned WordPress core
+        run: |
+          core_dir=$(bash bin/provision-wp-core)
+          echo "WP_CORE_DIR=$core_dir" >> "$GITHUB_ENV"
+      - name: Test
+        run: |
+          bash bin/php-lint
+          bash tests/run.sh
+          php tests/test-updater.php unconfigured
+          php tests/test-updater.php
+          bash tests/build-zip.sh
+      - name: Build and verify release assets
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$(git tag --points-at HEAD --list "$RELEASE_TAG")" == "$RELEASE_TAG" ]] || { echo 'Checkout is not the release tag' >&2; exit 1; }
+          archive=$(bash bin/build-zip)
+          php bin/release-info.php "$RELEASE_TAG"
+          [[ "$archive" == "$(pwd)/dist/rendar-prepublish-checks-${RELEASE_TAG#v}.zip" ]] || { echo 'Unexpected archive' >&2; exit 1; }
+          unzip -t "$archive"
+          unzip -Z1 "$archive" | grep -qx 'rendar-prepublish-checks/rendar-prepublish-checks.php'
+          if unzip -Z1 "$archive" | grep -Eq '(^|/)(tests|bin|docs)/'; then echo 'Development files in release' >&2; exit 1; fi
+          cp "$archive" rendar-prepublish-checks.zip
+      - name: Attach to published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" rendar-prepublish-checks.zip dist/info.json --clobber

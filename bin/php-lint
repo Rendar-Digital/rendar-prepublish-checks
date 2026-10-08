@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Lint every PHP file in the tree, tests included. Paths may be
+# supplied by CI; find's own exit status does not report -exec failures.
+if (( $# )); then
+  for path in "$@"; do php -l "$path" > /dev/null || exit 1; done
+else
+  while IFS= read -r -d '' path; do php -l "$path" > /dev/null || exit 1; done \
+    < <(find . \( -path './.git' -o -path './.worktrees' \) -prune -o -name '*.php' -type f -print0)
+fi

@@ -1,0 +1,132 @@
+/**
+ * Pre-publish checks panel.
+ *
+ * Editor-only chrome. It borrows the editor's own color variables rather than
+ * the site's design tokens, because it renders inside wp-admin and never on the
+ * front end — matching the site palette here would make it look like content.
+ */
+
+.rendar-pc__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.rendar-pc__check {
+	padding: 8px 0;
+	border-top: 1px solid #f0f0f0;
+}
+
+.rendar-pc__check:first-child {
+	border-top: 0;
+}
+
+.rendar-pc__head {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+}
+
+.rendar-pc__mark {
+	flex: 0 0 auto;
+	width: 1.2em;
+	font-weight: 700;
+	text-align: center;
+	line-height: 1.4;
+}
+
+.rendar-pc__mark.is-pass {
+	color: #007017;
+}
+
+.rendar-pc__mark.is-error {
+	color: #b32d2e;
+}
+
+.rendar-pc__mark.is-warning {
+	color: #996800;
+}
+
+.rendar-pc__mark.is-skipped,
+.rendar-pc__mark.is-unavailable {
+	color: #757575;
+}
+
+.rendar-pc__label {
+	font-weight: 600;
+}
+
+.rendar-pc__message {
+	margin: 2px 0 0;
+	padding-left: calc(1.2em + 8px);
+	color: #1e1e1e;
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+.rendar-pc__check.is-skipped .rendar-pc__message,
+.rendar-pc__check.is-unavailable .rendar-pc__message,
+.rendar-pc__note {
+	color: #757575;
+}
+
+.rendar-pc__offenders {
+	margin: 6px 0 0;
+	padding: 0 0 0 calc(1.2em + 8px);
+	list-style: none;
+}
+
+.rendar-pc__offender {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 10px;
+	padding: 3px 0;
+	font-size: 12px;
+}
+
+.rendar-pc__offender-label {
+	/* Filenames run long and must not push the buttons out of the sidebar. */
+	flex: 1 1 100%;
+	overflow-wrap: anywhere;
+	color: #1e1e1e;
+}
+
+.rendar-pc__offender .components-button.is-link,
+.rendar-pc__offender-edit,
+.rendar-pc__fix-parents {
+	font-size: 12px;
+	height: auto;
+}
+
+/* Align the repair action with the check's description, not its status icon. */
+.rendar-pc__check .rendar-pc__fix-parents {
+	display: block;
+	margin: 4px 0 0 calc(1.2em + 8px);
+}
+
+.rendar-pc__note {
+	margin: 8px 0 0;
+	font-size: 12px;
+	font-style: italic;
+}
+
+.rendar-pc__loading,
+.rendar-pc__busy {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0 0 8px;
+	color: #757575;
+	font-size: 12px;
+}
+
+.rendar-pc__override {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid #f0f0f0;
+}
+
+.rendar-pc__override-armed {
+	margin: 12px 0 0;
+}

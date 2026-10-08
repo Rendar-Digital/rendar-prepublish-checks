@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Downloads, verifies and extracts the pinned WordPress core release that
+# tests/test-updater.php runs against, and prints the extracted installation
+# root (the value to export as WP_CORE_DIR) on stdout. All other output goes
+# to stderr. Used by .github/workflows/check.yml and release.yml, and safe to
+# run locally to reproduce what CI does.
+#
+# Pin rationale and re-pin instructions: docs/wp-core-pin.md. Re-pinning means
+# updating WP_CORE_VERSION, WP_CORE_SHA1 and WP_CORE_SHA256 together, after
+# confirming the acceptance evidence for the new version.
+WP_CORE_VERSION="6.8.3"
+WP_CORE_SHA1="b676fb6744910d58180fd58597cc09bb2c5d4a2a"
+WP_CORE_SHA256="a163fe8d0d3d89ce00139ca0e0618e109bb7441fae2f733cff6c72fc4d170fb9"
+
+WP_CORE_URL="https://downloads.wordpress.org/release/wordpress-${WP_CORE_VERSION}.zip"
+WP_CORE_SHA1_URL="${WP_CORE_URL}.sha1"
+
+cache_dir="${WP_CORE_CACHE_DIR:-${RUNNER_TEMP:-${TMPDIR:-/tmp}}/rendar-wp-core-cache}"
+mkdir -p "$cache_dir"
+zip_path="$cache_dir/wordpress-${WP_CORE_VERSION}.zip"
+extract_root="$cache_dir/wordpress-${WP_CORE_VERSION}-extracted"
+
+log() { printf '[provision-wp-core] %s\n' "$*" >&2; }
+
+sha256_of() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | cut -d ' ' -f1
+  else
+    shasum -a 256 "$1" | cut -d ' ' -f1
+  fi
+}
+
+sha1_of() {
+  if command -v sha1sum >/dev/null 2>&1; then
+    sha1sum "$1" | cut -d ' ' -f1
+  else
+    shasum -a 1 "$1" | cut -d ' ' -f1
+  fi
+}
+
+verify_zip_pin() {
+  [[ -f "$zip_path" ]] || return 1
+  local actual_sha256 actual_sha1
+  actual_sha256=$(sha256_of "$zip_path")
+  actual_sha1=$(sha1_of "$zip_path")
+  [[ "$actual_sha256" == "$WP_CORE_SHA256" ]] || return 1
+  [[ "$actual_sha1" == "$WP_CORE_SHA1" ]] || return 1
+}
+
+if verify_zip_pin; then
+  log "Using cached, pin-verified $zip_path"
+else
+  rm -f "$zip_path"
+  log "Downloading $WP_CORE_URL"
+  curl -fsSL --max-time 180 -o "$zip_path" "$WP_CORE_URL"
+
+  # Cross-check against WordPress.org's own published sha1 sidecar (not just our
+  # recorded pin), so a corrupted or rotated CDN response is caught rather than
+  # silently accepted because it happens to match a stale local pin.
+  live_sha1=$(curl -fsSL --max-time 30 "$WP_CORE_SHA1_URL" | tr -d '[:space:]')
+  if [[ "$live_sha1" != "$WP_CORE_SHA1" ]]; then
+    rm -f "$zip_path"
+    log "WordPress.org's published sha1 ($live_sha1) does not match the pinned sha1 ($WP_CORE_SHA1) for $WP_CORE_VERSION."
+    log "Refusing to use this download. If WordPress.org genuinely re-cut this release, re-pin deliberately (docs/wp-core-pin.md); do not just update the pin to make this pass."
+    exit 1
+  fi
+
+  if ! verify_zip_pin; then
+    rm -f "$zip_path"
+    log "Downloaded WordPress $WP_CORE_VERSION failed local checksum verification against the pinned sha1/sha256."
+    exit 1
+  fi
+  log "Downloaded and verified wordpress-${WP_CORE_VERSION}.zip (sha256 $WP_CORE_SHA256, sha1 $WP_CORE_SHA1, matches WordPress.org's published sha1)."
+fi
+
+rm -rf "$extract_root"
+mkdir -p "$extract_root"
+unzip -q "$zip_path" -d "$extract_root"
+# Official WordPress.org release zips extract into a single top-level "wordpress/" directory.
+core_root="$extract_root/wordpress"
+[[ -f "$core_root/wp-load.php" && -d "$core_root/wp-includes" ]] || { log "Extracted archive does not look like a WordPress core (missing wp-load.php or wp-includes/)."; exit 1; }
+
+echo "$core_root"

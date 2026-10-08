@@ -1,0 +1,5 @@
+/.worktrees/
+*.zip
+/tests/.runtime/
+**/__pycache__/
+.DS_Store

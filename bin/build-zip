@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Build a deterministic release zip of the SHIPPING plugin only. Development
+# scaffolding -- tests/, docs/, bin/ and CI config -- is never packaged.
+root=$(cd "$(dirname "$0")/.." && pwd)
+slug=rendar-prepublish-checks
+version=$(php -r '$s=file_get_contents($argv[1]); preg_match("/Version:\\s*([0-9A-Za-z.\\-]+)/",$s,$m); echo $m[1]??"";' "$root/$slug.php")
+[[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+(-dev)?$ ]] || { echo "Invalid version: '$version'" >&2; exit 1; }
+[[ $(git -C "$root" status --porcelain --untracked-files=normal -- . ':!dist') == '' ]] || { echo 'Commit changes before packaging' >&2; exit 1; }
+mkdir -p "$root/dist"
+archive="$root/dist/$slug-$version.zip"
+# Never update an existing zip: zip's default behavior retains deleted entries.
+rm -f "$archive"
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/$slug"
+manifest="$tmp/manifest"
+: > "$manifest"
+while IFS= read -r -d '' item; do
+  case "$item" in
+    "$slug.php"|README.md|CHANGELOG.md|inc/*|assets/*) ;;
+    *) continue ;;
+  esac
+  [[ -f "$root/$item" && ! -L "$root/$item" ]] || { echo "Invalid package path: $item" >&2; exit 1; }
+  # Reject all symlinked path components, including a replacement inc/assets dir.
+  parent=$(dirname "$item")
+  while [[ $parent != . ]]; do
+    [[ ! -L "$root/$parent" ]] || { echo "Symlinked package path: $item" >&2; exit 1; }
+    parent=$(dirname "$parent")
+  done
+  dest="$tmp/$slug/$item"
+  mkdir -p "$(dirname "$dest")"
+  cp "$root/$item" "$dest"
+  touch -t 202001010000 "$dest"
+  printf '%s\n' "$slug/$item" >> "$manifest"
+done < <(git -C "$root" ls-files -z)
+LC_ALL=C sort -o "$manifest" "$manifest"
+[[ -s $manifest ]] && grep -qx "$slug/$slug.php" "$manifest" || { echo 'Missing plugin entry' >&2; exit 1; }
+# Belt-and-suspenders: never let development scaffolding into the archive.
+if grep -qE "^$slug/(bin|tests|docs)/" "$manifest"; then
+  echo 'Non-shipped path leaked into package manifest' >&2; exit 1
+fi
+( cd "$tmp" && LC_ALL=C zip -X -q "$archive" -@ < "$manifest" )
+unzip -Z1 "$archive" > "$tmp/actual"
+diff -u "$manifest" "$tmp/actual" || { rm -f "$archive"; echo 'ZIP manifest mismatch' >&2; exit 1; }
+echo "$archive"
