@@ -76,7 +76,7 @@ final class Rendar_PC_Updater {
 		return array(
 			'version' => $data['version'],
 			'slug' => $this->slug,
-			'url' => 'https://updates.rendar.digital/' . $this->slug,
+			'url' => 'https://github.com/Rendar-Digital/' . $this->slug,
 			'package' => $data['package'],
 			'requires' => $data['requires'],
 			'requires_php' => $data['requires_php'],
